@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package app;
+
+
+service App {
+
+  rpc CreateAccount(Account) returns (SuccessResponse) {}
+
+  rpc LogIn(Account) returns (SuccessResponse) {}
+
+  rpc LogOut(Account) returns (SuccessResponse) {}
+
+  rpc ListAccounts(UserSearch) returns (stream Account) {}
+
+  rpc SendMessage(Message) returns (SuccessResponse) {}
+
+  rpc GetMessage(Account) returns (stream Message) {}
+
+  rpc DeleteAccount(Account) returns (SuccessResponse) {}
+
+}
+
+message Account {
+    string username = 1;
+}
+
+message UserSearch {
+    string text = 1;
+}
+
+message Message {
+    string sender = 1;
+    string recipient = 2;
+    string text = 3;
+}
+
+message SuccessResponse {
+    bool success = 1;
+    string message = 2;
+}
