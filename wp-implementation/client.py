@@ -19,7 +19,7 @@ class Client():
         # check username constraints
 
         # build request string
-        opCode = "0"
+        opCode = "1"
         logInRequest = (opCode + "|" + username).encode()
         
         self.sock.send(logInRequest)
@@ -41,20 +41,6 @@ class Client():
         createAccountResponse = self.sock.recv(MSG_SIZE).decode().strip()
         # print(createAccountResponse)
         return createAccountResponse.split("|")
-
-    def ListAccounts(self):
-        opCode = "4"
-        wildcard = input("Search for subset (blank input will show all accounts): ")
-        listAccountsRequest = (opCode + "|" + wildcard).encode()
-        self.sock.send(listAccountsRequest)
-        listAccountsResponse = self.sock.recv(MSG_SIZE).decode().strip().split("|")
-        if listAccountsResponse[0] == "1":
-            for account in listAccountsResponse[1:]:
-                print(account)
-        else:
-            print("No accounts found with \"" + wildcard + "\".")
-        input("Press enter to continue.")
-        return
 
     def SendMessage(self):
         opCode = "2"
@@ -94,6 +80,20 @@ class Client():
             print("There are no unread messages.")
         input("Press enter to continue.")
         return
+
+    def ListAccounts(self):
+        opCode = "4"
+        wildcard = input("Search for subset (blank input will show all accounts): ")
+        listAccountsRequest = (opCode + "|" + wildcard).encode()
+        self.sock.send(listAccountsRequest)
+        listAccountsResponse = self.sock.recv(MSG_SIZE).decode().strip().split("|")
+        if listAccountsResponse[0] == "1" and len(listAccountsResponse[1]) > 0:
+            for account in listAccountsResponse[1:]:
+                print(account)
+        else:
+            print("No accounts found starting with \"" + wildcard + "\".")
+        input("Press enter to continue.")
+        return
     
     def DeleteAccount(self):
         opCode = "5"
@@ -120,7 +120,7 @@ class Client():
                     print("User " + username + " logged in.")
                     break
                 else:
-                    print("Username " + username + " does not exist, please try again.")
+                    print("Username " + username + " does not exist or is logged in, please try again.")
             
             if has_account.lower() == 'n':
                 loginStatus, username = self.CreateAccount()

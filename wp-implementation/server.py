@@ -3,11 +3,14 @@ import threading
 
 
 MSG_SIZE = 1024
+HOST = '65.112.8.52'
+PORT = 6000
 
 class Server():
 
     def __init__(self):
         self.accounts = {}
+        self.connections = {}
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     def DeleteAccount(self, clientSocket, username):
@@ -30,15 +33,17 @@ class Server():
         #implement wildcard search
 
         for account in self.accounts.keys():
-            listAccountsResponse += account + "|"
+            if wildcard in account:
+                listAccountsResponse += account + "|"
         
         clientSocket.send(listAccountsResponse.encode())
         return
 
-    def LogIn(self, clientSocket, username):
+    def LogIn(self, clientSocket, clientAddress, username):
         logInResponse = ''
 
-        if username in self.accounts:
+        if username in self.accounts and username not in self.connections:
+            self.connections[username] = clientAddress
             logInResponse = "1|" + username
         else:
             logInResponse = "0|" + username
@@ -46,10 +51,11 @@ class Server():
         clientSocket.send(logInResponse.encode())
         return
 
-    def CreateAccount(self, clientSocket, username):
+    def CreateAccount(self, clientSocket, clientAddress, username):
         createAccountResponse = ''
 
         if username not in self.accounts:
+            self.connections[username] = clientAddress
             self.accounts[username] = []
             createAccountResponse = "1|" + username
         
@@ -82,22 +88,25 @@ class Server():
             sendMessageResponse = "1|" + recipient
         else:
             sendMessageResponse = "0|" + recipient
-        print(self.accounts[recipient])
+        # print(self.accounts[recipient])
         clientSocket.send(sendMessageResponse.encode())
         return
 
     def Listen(self):
 
-        self.sock.bind((socket.gethostname(), 6000))
+        # self.sock.bind((socket.gethostname(), PORT))
+        # self.sock.bind((HOST, PORT))
+        self.sock.bind(('0.0.0.0', PORT))
         # print(self.sock.gethostbyname(self.sock.gethostname()))
 
         # become a server socket
         self.sock.listen(5)
+        print("Listening on " + HOST + ":" + str(PORT))
 
         while True:
             # accept connections from outside
             (clientSocket, clientAddress) = self.sock.accept()
-            print(clientAddress[0] + ' connected!')
+            print(clientAddress[0] + ":" + str(clientAddress[1]) + ' connected!')
 
             clientThread= threading.Thread(target=self.ClientThread, args=(clientSocket, clientAddress))
             clientThread.start()
@@ -109,17 +118,17 @@ class Server():
 
         while True:
             clientRequest = clientSocket.recv(MSG_SIZE).decode()
+            if not clientRequest:
+                break
             if clientRequest:
-                print("Got Request")
                 clientRequest = clientRequest.strip().split("|")
-                print(clientRequest)
                 opCode = clientRequest[0]
 
                 if opCode == "0":
-                    self.LogIn(clientSocket, clientRequest[1])
+                    self.LogIn(clientSocket, clientAddress, clientRequest[1])
 
                 elif opCode == "1":
-                    self.CreateAccount(clientSocket, clientRequest[1])
+                    self.CreateAccount(clientSocket, clientAddress, clientRequest[1])
                 
                 elif opCode == "2":
                     self.SendMessage(clientSocket, clientRequest[1], clientRequest[2], clientRequest[3])
@@ -132,25 +141,12 @@ class Server():
 
                 elif opCode == "5":
                     self.DeleteAccount(clientSocket, clientRequest[1])
-
-
-        # clientSocket.send("Welcome to the messaging center. Please enter your username: ".encode())
-        username = self.LogIn(clientSocket)
-
-        # check if username already exists - HANDLE LOGIC LATER
-        # prompt user 'do you have an account yet? if not then check if input exists and add, if yes then check f input exists and sign in
-
-        # add username to list of accounts
-        # self.accounts[username] = clientSocket
-
-        # clients.append(client_socket)
-        # print(f"{username} has created an account.")
-        # clientSocket.send(("Welcome " + username + ". Please choose an action.").encode())
-        # while True:
-        #     message = clientSocket.recv(1024).decode().strip()
-        #     if message:
-        #         self.accounts[message[:3]].send(message[3:])
-
+                    
+        for user, (addr, port) in self.connections.items():
+            if addr == clientAddress[0] and port == clientAddress[1]:
+                print("User " + user + " at " + addr + ":" + str(port) + " disconnected")
+                del self.connections[user]
+                break
         clientSocket.close()   
 
 if __name__ == '__main__':
