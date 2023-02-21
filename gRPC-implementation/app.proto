@@ -9,13 +9,13 @@ service App {
 
   rpc LogIn(Account) returns (SuccessResponse) {}
 
-  rpc LogOut(Account) returns (SuccessResponse) {}
-
   rpc ListAccounts(UserSearch) returns (stream Account) {}
 
   rpc SendMessage(Message) returns (SuccessResponse) {}
 
   rpc GetMessage(Account) returns (stream Message) {}
+
+  rpc LogOut(Account) returns (SuccessResponse) {}
 
   rpc DeleteAccount(Account) returns (SuccessResponse) {}
 

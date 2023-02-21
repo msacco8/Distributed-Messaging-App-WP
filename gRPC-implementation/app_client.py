@@ -82,6 +82,8 @@ def list_accounts(stub):
     print("No more accounts to display.\n")
 
 
+# deletes current account currently logged in and empties unread messages to
+# terminal before doing so
 def delete_account(stub, username):
     print("Displaying unread messages before deleting...\n")
     get_messages(stub, username)
@@ -90,37 +92,56 @@ def delete_account(stub, username):
     print(delete_account_response.message)
 
 
+# logs out current user
+def log_out(stub, username):
+    log_out_request = app_pb2.Account(username=username)
+    log_out_response = stub.LogOut(log_out_request)
+    print(log_out_response.message)
+
+
 # runs main control flow
 def run():
     with grpc.insecure_channel('localhost:6000') as channel:
         stub = app_pb2_grpc.AppStub(channel)
         print("Welcome to the messaging center.\n")
+        # hold username to essentially "sign in" the client to a username
         username = set_username(stub)
 
-        while True:
-            print("l = List accounts")
-            print("s = Send message")
-            print("g = Get messages")
-            print("d = Delete account")
-            print("e = Exit")
-            action = input("Action: ")
+        try:
+            # continuously act for action denoted by user key stroke
+            while True:
+                print("l = List accounts")
+                print("s = Send message")
+                print("g = Get messages")
+                print("d = Delete account")
+                print("e = Exit")
+                action = input("Action: ")
 
-            if action.lower() == 'l':
-                list_accounts(stub)
-            
-            if action.lower() == 's':
-                send_message(stub, username)
+                if action.lower() == 'l':
+                    list_accounts(stub)
+                
+                if action.lower() == 's':
+                    send_message(stub, username)
 
-            if action.lower() == 'g':
-                get_messages(stub, username)
+                if action.lower() == 'g':
+                    get_messages(stub, username)
 
-            if action.lower() == 'd':
-                delete_account(stub, username)
-                break
+                if action.lower() == 'd':
+                    delete_account(stub, username)
+                    break
 
-            if action.lower() == 'e':
-                break
+                if action.lower() == 'e':
+                    log_out(stub, username)
+                    break
+        
+        # user should log out normally, but incase they exit terminal with cmd+C, this block
+        # will execute and log the user out. This enforces one (and only one) client always being
+        # allowed to log into one account
+        finally:
+            log_out(stub, username)
 
 
+# run main block
 if __name__ == "__main__":
     run()
+    

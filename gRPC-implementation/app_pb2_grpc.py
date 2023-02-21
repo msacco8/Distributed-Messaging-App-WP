@@ -24,11 +24,6 @@ class AppStub(object):
                 request_serializer=app__pb2.Account.SerializeToString,
                 response_deserializer=app__pb2.SuccessResponse.FromString,
                 )
-        self.LogOut = channel.unary_unary(
-                '/app.App/LogOut',
-                request_serializer=app__pb2.Account.SerializeToString,
-                response_deserializer=app__pb2.SuccessResponse.FromString,
-                )
         self.ListAccounts = channel.unary_stream(
                 '/app.App/ListAccounts',
                 request_serializer=app__pb2.UserSearch.SerializeToString,
@@ -43,6 +38,11 @@ class AppStub(object):
                 '/app.App/GetMessage',
                 request_serializer=app__pb2.Account.SerializeToString,
                 response_deserializer=app__pb2.Message.FromString,
+                )
+        self.LogOut = channel.unary_unary(
+                '/app.App/LogOut',
+                request_serializer=app__pb2.Account.SerializeToString,
+                response_deserializer=app__pb2.SuccessResponse.FromString,
                 )
         self.DeleteAccount = channel.unary_unary(
                 '/app.App/DeleteAccount',
@@ -66,12 +66,6 @@ class AppServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def LogOut(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
     def ListAccounts(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
@@ -85,6 +79,12 @@ class AppServicer(object):
         raise NotImplementedError('Method not implemented!')
 
     def GetMessage(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def LogOut(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -109,11 +109,6 @@ def add_AppServicer_to_server(servicer, server):
                     request_deserializer=app__pb2.Account.FromString,
                     response_serializer=app__pb2.SuccessResponse.SerializeToString,
             ),
-            'LogOut': grpc.unary_unary_rpc_method_handler(
-                    servicer.LogOut,
-                    request_deserializer=app__pb2.Account.FromString,
-                    response_serializer=app__pb2.SuccessResponse.SerializeToString,
-            ),
             'ListAccounts': grpc.unary_stream_rpc_method_handler(
                     servicer.ListAccounts,
                     request_deserializer=app__pb2.UserSearch.FromString,
@@ -128,6 +123,11 @@ def add_AppServicer_to_server(servicer, server):
                     servicer.GetMessage,
                     request_deserializer=app__pb2.Account.FromString,
                     response_serializer=app__pb2.Message.SerializeToString,
+            ),
+            'LogOut': grpc.unary_unary_rpc_method_handler(
+                    servicer.LogOut,
+                    request_deserializer=app__pb2.Account.FromString,
+                    response_serializer=app__pb2.SuccessResponse.SerializeToString,
             ),
             'DeleteAccount': grpc.unary_unary_rpc_method_handler(
                     servicer.DeleteAccount,
@@ -173,23 +173,6 @@ class App(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/app.App/LogIn',
-            app__pb2.Account.SerializeToString,
-            app__pb2.SuccessResponse.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
-
-    @staticmethod
-    def LogOut(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/app.App/LogOut',
             app__pb2.Account.SerializeToString,
             app__pb2.SuccessResponse.FromString,
             options, channel_credentials,
@@ -243,6 +226,23 @@ class App(object):
         return grpc.experimental.unary_stream(request, target, '/app.App/GetMessage',
             app__pb2.Account.SerializeToString,
             app__pb2.Message.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def LogOut(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/app.App/LogOut',
+            app__pb2.Account.SerializeToString,
+            app__pb2.SuccessResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
