@@ -1,5 +1,7 @@
+# SERVER SIDE OF GRPC APPLICATION
 import logging
 from concurrent import futures
+import socket
 
 import grpc
 import app_pb2
@@ -111,11 +113,16 @@ class AppServicer(app_pb2_grpc.AppServicer):
             )
 
 
-# run server with 10 threads to handle multiple clients, runs on port 6000
+# run server with 10 threads to handle multiple clients
 def serve():
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     app_pb2_grpc.add_AppServicer_to_server(AppServicer(), server)
-    server.add_insecure_port('[::]:6000')
+
+    # get ip address of current server and make sure server listens on port 6000
+    ip_address = socket.gethostbyname(socket.gethostname())
+    print("When running your client, specify " + ip_address + " as an argument to the terminal.")
+    server.add_insecure_port(ip_address + ':6000')
+
     server.start()
     server.wait_for_termination()
 

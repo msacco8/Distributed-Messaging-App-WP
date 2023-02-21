@@ -1,5 +1,6 @@
 # CLIENT SIDE OF GRPC APPLICATION
 from __future__ import print_function
+import sys
 
 import grpc
 import app_pb2
@@ -100,8 +101,8 @@ def log_out(stub, username):
 
 
 # runs main control flow
-def run():
-    with grpc.insecure_channel('localhost:6000') as channel:
+def run(server_addr):
+    with grpc.insecure_channel(server_addr + ":6000") as channel:
         stub = app_pb2_grpc.AppStub(channel)
         print("Welcome to the messaging center.\n")
         # hold username to essentially "sign in" the client to a username
@@ -131,7 +132,6 @@ def run():
                     break
 
                 if action.lower() == 'e':
-                    log_out(stub, username)
                     break
         
         # user should log out normally, but incase they exit terminal with cmd+C, this block
@@ -141,7 +141,11 @@ def run():
             log_out(stub, username)
 
 
-# run main block
+# take in server address as argument to run command, specified by user.
+# On jminicus laptop use 10.250.253.163
 if __name__ == "__main__":
-    run()
-    
+    server_addr = sys.argv[1]
+    if not server_addr:
+        print("Please try again and enter the server IP address as an argument.")
+    else:
+        run(server_addr)
