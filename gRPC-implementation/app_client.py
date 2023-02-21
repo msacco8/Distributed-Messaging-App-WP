@@ -107,6 +107,9 @@ def run(server_addr):
         print("Welcome to the messaging center.\n")
         # hold username to essentially "sign in" the client to a username
         username = set_username(stub)
+        # keep track of whether the user deletes the account or not so we code
+        # doesn't try to log out ot deleted account
+        deleted = False
 
         try:
             # continuously act for action denoted by user key stroke
@@ -129,6 +132,7 @@ def run(server_addr):
 
                 if action.lower() == 'd':
                     delete_account(stub, username)
+                    deleted = True
                     break
 
                 if action.lower() == 'e':
@@ -138,7 +142,8 @@ def run(server_addr):
         # will execute and log the user out. This enforces one (and only one) client always being
         # allowed to log into one account
         finally:
-            log_out(stub, username)
+            if not deleted:
+                log_out(stub, username)
 
 
 # take in server address as argument to run command, specified by user.
