@@ -1,102 +1,162 @@
 import socket
 import threading
 
-
 MSG_SIZE = 1024
-HOST = '65.112.8.52'
+HOST = '172.30.18.52'
 PORT = 6000
 
 class Server():
 
     def __init__(self):
+
+        # store mapping from username to messages
         self.accounts = {}
+
+        # store mapping from username to address and port
         self.connections = {}
+
+        # initialize server socket
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     def DeleteAccount(self, clientSocket, username):
         deleteAccountResponse = ''
 
+        # deletes mapping from accounts to messages and returns success
         if username in self.accounts:
             del self.accounts[username]
             deleteAccountResponse = "1|" + username
             print("User " + username + " deleted.")
+        # returns failure response in case that user does not exist
         else:
             deleteAccountResponse = "0|" + username
             print("Error deleting user " + username + ".")
 
-        clientSocket.send(deleteAccountResponse.encode())
+        try:
+            clientSocket.send(deleteAccountResponse.encode())
+        except:
+            print("Error sending delete account response")
         return
 
     def ListAccounts(self, clientSocket, wildcard):
         listAccountsResponse = '1|'
 
-        #implement wildcard search
-
+        # adds each account that contains wildcard substring to response
         for account in self.accounts.keys():
             if wildcard in account:
                 listAccountsResponse += account + "|"
-        
-        clientSocket.send(listAccountsResponse.encode())
+
+        try:
+            clientSocket.send(listAccountsResponse[:-1].encode())
+        except:
+            print("Error sending list accounts response")
         return
 
     def LogIn(self, clientSocket, clientAddress, username):
         logInResponse = ''
 
+        # checks if username exists and is not currently logged in
         if username in self.accounts and username not in self.connections:
             self.connections[username] = clientAddress
             logInResponse = "1|" + username
+        # returns failure response otherwise
         else:
             logInResponse = "0|" + username
-        
-        clientSocket.send(logInResponse.encode())
+
+        try:
+            clientSocket.send(logInResponse.encode())
+        except:
+            print("Error sending log in response")
         return
 
     def CreateAccount(self, clientSocket, clientAddress, username):
         createAccountResponse = ''
 
+        # verifies that user doesn't already exist
         if username not in self.accounts:
+            # adds to both mappings from username to messages and addr/port
             self.connections[username] = clientAddress
             self.accounts[username] = []
             createAccountResponse = "1|" + username
-        
+        # returns failure response if user already exists
         else:
             createAccountResponse = "0|" + username
         
         print(createAccountResponse)
+        print(self.connections)
         clientSocket.send(createAccountResponse.encode())
         return
 
     def GetMessages(self, clientSocket, username):
-        # need to handle for when size of list is greater than msg size
-        getMessagesResponse = ''
+        # initialize response and number of MSG_SIZE messages to send
+        responseBuilder = ''
+        numMessages = 1
 
+        # verify that user exists and that they have unread messages
         if username in self.accounts and self.accounts[username]:
-            getMessagesResponse = "1"
+
+            # add each message with pipe delimiter to response
             for sender, message in self.accounts[username]:
-                getMessagesResponse += "|" + sender + "|" + message
+                responseBuilder += "|" + sender + "|" + message
+
+            # calculate number of different messages to send based on MSG_SIZE
+            numMessages = ((len(responseBuilder) + 2) // MSG_SIZE) + 1
+
+            # append to front of message for client side to receive
+            getMessagesResponse = str(numMessages) + responseBuilder
+
+            # clear user's inbox
             self.accounts[username] = []
+
         else:
             getMessagesResponse = "0|"
-        clientSocket.send(getMessagesResponse.encode())
+        
+        # initialize sent data counter
+        totalSent = 0
+
+        # send MSG_SIZE while there is data to be sent
+        while totalSent < (numMessages * MSG_SIZE):
+            toSend = ''
+
+            # prepare remaining data if on last message
+            if totalSent + MSG_SIZE > len(getMessagesResponse[totalSent:]):
+                toSend = getMessagesResponse[totalSent:]
+
+            # prepare MSG_SIZE chunk if not
+            else:
+                toSend = getMessagesResponse[totalSent:(totalSent + MSG_SIZE)]
+
+            # send current chunk and increment sent counter
+            try:
+                sent = clientSocket.send(toSend.encode())
+            except:
+                print("Error sending chunk.")
+            totalSent += MSG_SIZE
         return 
 
     def SendMessage(self, clientSocket, sender, recipient, message):
         sendMessageResponse = ''
 
+        # verify that recipient exists
         if recipient in self.accounts:
+            # add message to messages list and return success response
             self.accounts[recipient].append([sender, message])
             sendMessageResponse = "1|" + recipient
         else:
+            # return failure response if recipient doesn't exist
             sendMessageResponse = "0|" + recipient
-        # print(self.accounts[recipient])
-        clientSocket.send(sendMessageResponse.encode())
+        try:
+            clientSocket.send(sendMessageResponse.encode())
+        except:
+            print("Error sending send message response")
         return
 
     def Listen(self):
 
-        # self.sock.bind((socket.gethostname(), PORT))
+        self.sock.bind((socket.gethostname(), PORT))
         # self.sock.bind((HOST, PORT))
-        self.sock.bind(('0.0.0.0', PORT))
+        # self.sock.bind(('172.30.16.1', PORT))
+        print(socket.gethostbyname(socket.gethostname()))
+        # self.sock.bind(('65.112.8.52', PORT))
         # print(self.sock.gethostbyname(self.sock.gethostname()))
 
         # become a server socket
@@ -114,14 +174,17 @@ class Server():
         self.sock.close()
 
     def ClientThread(self, clientSocket, clientAddress):
-        print("Hello")
 
+        # receive MSG_SIZE until 0 bytes are received and exit control loop
         while True:
             clientRequest = clientSocket.recv(MSG_SIZE).decode()
             if not clientRequest:
                 break
             if clientRequest:
+                # scan request string by pipe delimiter
                 clientRequest = clientRequest.strip().split("|")
+
+                # first element of request determines the action called by client
                 opCode = clientRequest[0]
 
                 if opCode == "0":
@@ -142,6 +205,7 @@ class Server():
                 elif opCode == "5":
                     self.DeleteAccount(clientSocket, clientRequest[1])
                     
+        # remove client from connection list when they send 0 bytes
         for user, (addr, port) in self.connections.items():
             if addr == clientAddress[0] and port == clientAddress[1]:
                 print("User " + user + " at " + addr + ":" + str(port) + " disconnected")
@@ -152,54 +216,3 @@ class Server():
 if __name__ == '__main__':
     server = Server()
     server.Listen()
-
-
-# # list to store created accounts
-# created_accounts = {}
-
-# # list to store current client connections
-# clients = {}
-
-# # def send_message(message, receiver_socket):
-# #     receiver_socket.send(message)
-
-# def client_thread(client_socket, client_address):
-
-#     client_socket.send("Welcome to the messaging center. Please enter your username: ".encode())
-#     username = client_socket.recv(1024).decode().strip()
-
-#     # check if username already exists - HANDLE LOGIC LATER
-#     # prompt user 'do you have an account yet? if not then check if input exists and add, if yes then check f input exists and sign in
-
-#     # add username to list of accounts
-#     created_accounts[username] = client_socket
-#     # clients.append(client_socket)
-#     print(f"{username} has created an account.")
-#     client_socket.send((f"Welcome {username}!").encode())
-#     while True:
-#         message = client_socket.recv(1024).decode().strip()
-#         if message:
-#             created_accounts[message[:3]].send(message[3:])
-
-#     client_socket.close()
-
-
-# serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-# # serversocket.bind((socket.gethostname(), 3020))
-# serversocket.bind(('0.0.0.0', 6000))
-# print(socket.gethostbyname(socket.gethostname()))
-
-# # become a server socket
-# serversocket.listen(5)
-
-# while True:
-#     # accept connections from outside
-#     (client_socket, client_address) = serversocket.accept()
-#     print(client_address[0] + ' connected!')
-
-#     cl_thread= threading.Thread(target=client_thread, args=(client_socket, client_address))
-#     cl_thread.start()
-
-
-# serversocket.close()

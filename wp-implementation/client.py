@@ -3,6 +3,7 @@ import select
 import sys
 
 MSG_SIZE = 1024
+HEADER_LENGTH = 2
 
 class Client():
 
@@ -12,52 +13,99 @@ class Client():
     
     def Connect(self):
         self.sock.connect((socket.gethostname(), 6000))
+        # self.sock.connect(('172.30.18.52', 6000))
+        # self.sock.connect(('172.30.18.52', 6000))
     
     def LogIn(self):
-        username = input("Please enter your username: ")
 
         # check username constraints
+        while True:
+            username = input("Please enter your username: ")
+            if len(username) > 16:
+                print("Usernames cannot contain more than 16 characters. Please try again.")
+            else:
+                break
 
         # build request string
-        opCode = "1"
+        opCode = "0"
         logInRequest = (opCode + "|" + username).encode()
         
-        self.sock.send(logInRequest)
+        try:
+            self.sock.send(logInRequest)
+        except:
+            print("Error sending login request")
 
-        logInResponse = self.sock.recv(MSG_SIZE).decode().strip()
+        try:
+            logInResponse = self.sock.recv(MSG_SIZE).decode().strip()
+        except:
+            print("Error receiving login response")
+
+        print(logInResponse)
+
         return logInResponse.split("|")
 
     def CreateAccount(self):
-        username = input("Enter your desired username to create an account: ")
 
         # check username constraints
+        while True:
+            username = input("Enter your desired username to create an account: ")
+            if len(username) > 16:
+                print("Username must be 16 characters or less")
+            else:
+                break
 
         # build request string
         opCode = "1"
         createAccountRequest = (opCode + "|" + username).encode()
 
         # send request string to server and get response
-        self.sock.send(createAccountRequest)
-        createAccountResponse = self.sock.recv(MSG_SIZE).decode().strip()
-        # print(createAccountResponse)
+        try:
+            self.sock.send(createAccountRequest)
+        except:
+            print("Error sending create account request")
+
+        try:
+            createAccountResponse = self.sock.recv(MSG_SIZE).decode().strip()
+        except:
+            print("Error receiving create account response")
+
         return createAccountResponse.split("|")
 
     def SendMessage(self):
         opCode = "2"
-        recipient = input("To: ")
-        message = input("Message: ")
 
         # check recipient constraints
+        while True:
+            recipient = input("To: ")
+            if len(recipient) > 16:
+                print("Usernames cannot contain more than 16 characters. Please try again.")
+            else:
+                break
+
         # check message constraints
+        while True:
+            message = input("Message: ")
+            if len(message) > 256:
+                print("Messages cannot contain more than 256 characters. Please try again.")
+            else:
+                break
 
         sendMessageRequest = (opCode + "|" + self.username + "|" + recipient + "|" + message).encode()
-        self.sock.send(sendMessageRequest)
-        sendMessageResponse = self.sock.recv(MSG_SIZE).decode().strip().split("|")
+
+        try:
+            self.sock.send(sendMessageRequest)
+        except:
+            print("Error sending message request")
+
+        try:
+            sendMessageResponse = self.sock.recv(MSG_SIZE).decode().strip().split("|")
+        except:
+            print("Error receiving send message response")
 
         if sendMessageResponse[0] == "1":
             print("Message sent to " + recipient + ".")
         else:
-            print("Error sending message.")
+            print("User " + recipient + "does not exist.")
 
         return
     
@@ -66,9 +114,16 @@ class Client():
         opCode = "3"
         getMessagesRequest = (opCode + "|" + self.username).encode()
         self.sock.send(getMessagesRequest)
-        getMessagesResponse = self.sock.recv(MSG_SIZE).decode().strip().split("|")
+        getMessagesResponse = self.sock.recv(MSG_SIZE).decode()
+        getMessageLength = int(getMessagesResponse.split("|")[0])
+        totalRecvd = MSG_SIZE
 
-        if getMessagesResponse[0] == "1":
+        if getMessageLength != 0:
+            if getMessageLength > 1:
+                while totalRecvd < (getMessageLength * MSG_SIZE):
+                    getMessagesResponse += self.sock.recv(MSG_SIZE).decode()
+                    totalRecvd += MSG_SIZE
+            getMessagesResponse = getMessagesResponse.strip().split("|")
             msgPtr = 1
             print("Messages:")
             while msgPtr < len(getMessagesResponse) - 1:
@@ -96,6 +151,7 @@ class Client():
         return
     
     def DeleteAccount(self):
+        self.GetMessages()
         opCode = "5"
         deleteAccountRequest = (opCode + "|" + self.username).encode()
         self.sock.send(deleteAccountRequest)
@@ -167,36 +223,3 @@ if __name__ == '__main__':
     client = Client()
     client.Connect()
     client.Run()
-
-# server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-# # server.connect((socket.gethostname(), 3020))
-# server.connect((socket.gethostname(), 6000))
-# print(socket.gethostname())
-
-# while True:
-
-#     print("l = List accounts")
-#     print("s = Send message")
-#     print("g = Get messages")
-#     print("d = Delete account")
-#     print("e = Exit")
-#     action = input("Action: ")
-
-#     sockets_list = [sys.stdin, server]
-
-#     read_sockets,write_socket, error_socket = select.select(sockets_list,[],[])
-
-#     for socks in read_sockets:
-#         if socks == server:
-#             message = socks.recv(2048)
-#             # print (message)
-#         else:
-#             message = sys.stdin.readline()
-#             server.send(message.encode())
-#             sys.stdout.write("<You>")
-#             sys.stdout.write(message)
-#             sys.stdout.flush()
-
-
-# server.close()
