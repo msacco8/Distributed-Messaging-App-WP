@@ -105,14 +105,14 @@ def run(server_addr):
     with grpc.insecure_channel(server_addr + ":6000") as channel:
         stub = app_pb2_grpc.AppStub(channel)
         print("Welcome to the messaging center.\n")
-        # hold username to essentially "sign in" the client to a username
+        # maintain username to essentially "sign in" the client to a username
         username = set_username(stub)
-        # keep track of whether the user deletes the account or not so we code
-        # doesn't try to log out ot deleted account
+        # keep track of whether the user deletes the account or not so we don't
+        # try to log out ot deleted account
         deleted = False
 
         try:
-            # continuously act for action denoted by user key stroke
+            # continuously ask for action denoted by user key stroke
             while True:
                 print("l = List accounts")
                 print("s = Send message")
@@ -138,16 +138,18 @@ def run(server_addr):
                 if action.lower() == 'e':
                     break
         
-        # user should log out normally, but incase they exit terminal with cmd+C, this block
-        # will execute and log the user out. This enforces one (and only one) client always being
-        # allowed to log into one account
+        # executes a log out when the user exits in correctly (pressing "e") or exits
+        # incorrectly by just cancelling the terminal. Ensures that one (and only one)
+        # terminal can always access the account. Also does not attempt to log out of the
+        # account if user has just deleted it with "d" command
         finally:
             if not deleted:
                 log_out(stub, username)
 
 
 # take in server address as argument to run command, specified by user.
-# On jminicus laptop use 10.250.253.163
+# When server is ran, it will display to the server terminal which IP address
+# to specify when running the client
 if __name__ == "__main__":
     server_addr = sys.argv[1]
     if not server_addr:
