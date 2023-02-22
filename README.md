@@ -121,4 +121,4 @@ Lastly, we decided that when an account is deleted, it should empty all unread m
 
 ## Notable Differences between Wire Protocol and gRPC
 
-Overall, although learning how to work gRPC was a somewhat lengthy process, using it for this application proved to be much more straightforward. It felt somewhat akin to coding in C versus coding in Python. 
+Words.
