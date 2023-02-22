@@ -11,10 +11,8 @@ class Client():
         self.username = ''
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     
-    def Connect(self):
-        self.sock.connect((socket.gethostname(), 6000))
-        # self.sock.connect(('172.30.18.52', 6000))
-        # self.sock.connect(('172.30.18.52', 6000))
+    def Connect(self, serverAddress):
+        self.sock.connect((serverAddress, 6000))
     
     def LogIn(self):
 
@@ -220,6 +218,10 @@ class Client():
         self.sock.close()
 
 if __name__ == '__main__':
-    client = Client()
-    client.Connect()
-    client.Run()
+    serverAddress = sys.argv[1]
+    if not serverAddress:
+        print("Please try again and enter the server IP address as an argument.")
+    else:
+        client = Client()
+        client.Connect(serverAddress)
+        client.Run()
