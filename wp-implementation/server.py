@@ -2,7 +2,6 @@ import socket
 import threading
 
 MSG_SIZE = 1024
-HOST = '172.30.18.52'
 PORT = 6000
 
 class Server():
@@ -152,16 +151,13 @@ class Server():
 
     def Listen(self):
 
-        self.sock.bind((socket.gethostname(), PORT))
-        # self.sock.bind((HOST, PORT))
-        # self.sock.bind(('172.30.16.1', PORT))
-        print(socket.gethostbyname(socket.gethostname()))
-        # self.sock.bind(('65.112.8.52', PORT))
-        # print(self.sock.gethostbyname(self.sock.gethostname()))
+        # bind socket to host address and port
+        ADDR = socket.gethostbyname(socket.gethostname())
+        self.sock.bind((ADDR, PORT))
 
         # become a server socket
         self.sock.listen(5)
-        print("Listening on " + HOST + ":" + str(PORT))
+        print("Listening on " + ADDR + ":" + str(PORT))
 
         while True:
             # accept connections from outside
