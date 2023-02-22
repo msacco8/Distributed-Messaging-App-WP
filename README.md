@@ -1,14 +1,49 @@
 # Design Documentation
 
-Words.
+## Wire Protocol Configuration
 
-## Wire Protocal Configuration
+wp-implementation uses only the Python standard library
 
-Words.
+To run the client and server. make sure that the two terminals are on the same network and that you have navigated to the 'wp-implementation' directory. Then, run:
 
-## Wire Protocal Engineering Notebook
+```bash
+python3 server.py
+```
 
-Words.
+This will display the IP address and port that the server is listening on in the terminal. Use the IP address as a command line argument when running the client to connect to the server.
+
+```bash
+python3 app_client.py <server IP address>
+```
+
+Once connected, the client will display instructions for using the messaging system.
+
+## Wire Protocol Engineering Notebook
+
+In order to create the wire protocol, we first tried to understand the restrictions that we would set on the actions of a client user. Considerations such as message size limits, simultaneous logins, and user character limits were brought up. These allowed us to think about the edge cases of the protocol and how we would deal with them.
+
+By beginning with the gRPC implementation, we were able to use the request and response model that gRPC uses for each of the calls on the wire protocol. This would ensure that we would have sufficient knowledge at each point above the transfer layer to understand where things were going wrong.
+
+Each method on the client side began with the building of a request string, and the specific method was chosen by the control flow loop in the terminal interface. Each method's request was built from an operation code, and the arguments to the function, delimited by pipes, so that the server could scan the request and quickly gather information about what needed to be done. The opcodes correspond to the following functions:
+
+"0" - LogIn
+"1" - CreateAccount
+"2" - SendMessage
+"3" - GetMessages
+"4" - ListAccounts
+"5" - DeleteAccount
+
+The client request would then dispatch to the server where the server would alter the data structures necessary for the function, then return a pipe delimited response, where the first character indicated whether the call failed. In special cases, like in GetMessages, the first character indicated the sum of the length of all unread messages. If the character was 0 however, it always represented that an error had occurred or a restriction had been broken. Since every action that needed to be implemented could easily be done using strings, I believe the pipe delimited messages separating strings was a solid design choice for this particular assignment.
+
+The client would then await the response from the server to visually relay the status of the client's request to the user. This end to end request/response model was chosen to clearly display on both ends what was occurring, and was heavily influenced by gRPC's implementation of client/server communication.
+
+Much of the input handling was done on the client side, to minimize the calls to the server. A call was made to the server only when checking the server's data storage was necessary. This was an easy way to create a more efficient system. Examples of this usually involved limiting input sizes based on the purpose of the data that was being sent to the server.
+
+On the server side, a mapping from users to messages seemed to be a sufficient way to keep track of the state of each user, and was also a rapid way to check if specific users existed for use in other functions. To handle the issue of multiple users logging in simultaneously, a mapping from usernames to a tuple of address and port was utilized and entries were deleted upon client sockets disconnecting.
+
+Initially, every message was set to a fixed length and trailing space was stripped to keep the implementation simple, although not very space effective. We decided to keep the message length at 1024 and focus on reducing edge cases. By limiting the message size to 1024, we soon realized that a user who had multiple long messages, with a total length exceeding 1024, would not be able to receive everything. Given this, we decided to modify the GetMessages function to first gather the total length of all messages into a prelimanary response string on the server side. This length was divided by the MSG_SIZE in order to specify how many chunks of 1024 we would need to send to the client. The response string's status code, which lead the string, represented this number so that the client knew when to stop receiving. This method efficiently solved the issue in which a user had many long messages, and was an interesting way to let the message receiver know the length of the message before it's received in its entirety.
+
+Many of the other design decisions which overlap with the wire protocol implementation are described in the gRPC section.
 
 ## gRPC Configuration 
 
@@ -75,6 +110,6 @@ Another design decision was how the client should receive messages. Since it is 
 
 Lastly, we decided that when an account is deleted, it should empty all unread messages onto the terminal before deleting such that no message goes unseen and the server is not left having to clean up unused message queues.
 
-## Notable Differences between Wire Protocal and gRPC
+## Notable Differences between Wire Protocol and gRPC
 
 Words.

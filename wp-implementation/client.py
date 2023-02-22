@@ -1,17 +1,21 @@
 import socket
-import select
 import sys
 
 MSG_SIZE = 1024
-HEADER_LENGTH = 2
 
 class Client():
 
     def __init__(self):
+
+        # store username of current client session
         self.username = ''
+
+        # initialize client socket
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     
     def Connect(self, serverAddress):
+
+        # connect to server from system arguments
         self.sock.connect((serverAddress, 6000))
     
     def LogIn(self):
@@ -28,6 +32,7 @@ class Client():
         opCode = "0"
         logInRequest = (opCode + "|" + username).encode()
         
+        # send log in request to server and get response
         try:
             self.sock.send(logInRequest)
         except:
@@ -37,8 +42,6 @@ class Client():
             logInResponse = self.sock.recv(MSG_SIZE).decode().strip()
         except:
             print("Error receiving login response")
-
-        print(logInResponse)
 
         return logInResponse.split("|")
 
@@ -56,7 +59,7 @@ class Client():
         opCode = "1"
         createAccountRequest = (opCode + "|" + username).encode()
 
-        # send request string to server and get response
+        # send create account request to server and get response
         try:
             self.sock.send(createAccountRequest)
         except:
@@ -88,8 +91,10 @@ class Client():
             else:
                 break
 
+        # build pipe delimited request string
         sendMessageRequest = (opCode + "|" + self.username + "|" + recipient + "|" + message).encode()
 
+        # send message request to server and get response
         try:
             self.sock.send(sendMessageRequest)
         except:
@@ -100,6 +105,7 @@ class Client():
         except:
             print("Error receiving send message response")
 
+        # reflect success status to client
         if sendMessageResponse[0] == "1":
             print("Message sent to " + recipient + ".")
         else:
@@ -108,14 +114,18 @@ class Client():
         return
     
     def GetMessages(self):
-        # need to handle for when size of list is greater than msg size
         opCode = "3"
+
+        # send username to server to await return of messages
         getMessagesRequest = (opCode + "|" + self.username).encode()
         self.sock.send(getMessagesRequest)
+
+        # get first chunk of size MSG_SIZE to receive number of required messages
         getMessagesResponse = self.sock.recv(MSG_SIZE).decode()
         getMessageLength = int(getMessagesResponse.split("|")[0])
         totalRecvd = MSG_SIZE
 
+        # receive chunks of MSG_SIZE until entire message is received
         if getMessageLength != 0:
             if getMessageLength > 1:
                 while totalRecvd < (getMessageLength * MSG_SIZE):
@@ -124,6 +134,7 @@ class Client():
             getMessagesResponse = getMessagesResponse.strip().split("|")
             msgPtr = 1
             print("Messages:")
+            # output sender + message for each message in response
             while msgPtr < len(getMessagesResponse) - 1:
                 sender = getMessagesResponse[msgPtr]
                 message = getMessagesResponse[msgPtr + 1]
@@ -136,10 +147,18 @@ class Client():
 
     def ListAccounts(self):
         opCode = "4"
+
+        # take user input to search for any substring that matches a subset of user strings
         wildcard = input("Search for subset (blank input will show all accounts): ")
+
+        # build request and send to server
         listAccountsRequest = (opCode + "|" + wildcard).encode()
         self.sock.send(listAccountsRequest)
+
+        # receive list of accounts from server based on wildcard
         listAccountsResponse = self.sock.recv(MSG_SIZE).decode().strip().split("|")
+
+        # output accounts to client interface if there is a successful response
         if listAccountsResponse[0] == "1" and len(listAccountsResponse[1]) > 0:
             for account in listAccountsResponse[1:]:
                 print(account)
@@ -149,10 +168,16 @@ class Client():
         return
     
     def DeleteAccount(self):
-        self.GetMessages()
         opCode = "5"
+
+        # list all messages to client prior to account deletion
+        self.GetMessages()
+
+        # send deletion request to server
         deleteAccountRequest = (opCode + "|" + self.username).encode()
         self.sock.send(deleteAccountRequest)
+
+        # receive deletion response and display to client
         deleteAccountResponse = self.sock.recv(MSG_SIZE).decode().strip().split("|")
         if deleteAccountResponse[0] == "1":
             print("User " + self.username + " successfully deleted. Bye.")
@@ -164,9 +189,11 @@ class Client():
 
         print("Welcome to the messaging center.\n")
 
+        # login control loop
         while True:
             has_account = input("Do you have an account already? (y/n): ")
 
+            # handle existing user
             if has_account.lower() == 'y':
                 loginStatus, username  = self.LogIn()
                 if loginStatus == "1":
@@ -176,6 +203,7 @@ class Client():
                 else:
                     print("Username " + username + " does not exist or is logged in, please try again.")
             
+            # handle new user
             if has_account.lower() == 'n':
                 loginStatus, username = self.CreateAccount()
                 if loginStatus == "1":
@@ -185,8 +213,10 @@ class Client():
                 else:
                     print("Username " + username + " is taken, please try again.")
         
+        # set user once client has logged in or created account
         self.username = username
 
+        # enter main control loop for dispatching to server
         while True:
 
             print("l = List accounts")

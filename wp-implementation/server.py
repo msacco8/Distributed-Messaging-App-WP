@@ -80,12 +80,11 @@ class Server():
         else:
             createAccountResponse = "0|" + username
         
-        print(createAccountResponse)
-        print(self.connections)
         clientSocket.send(createAccountResponse.encode())
         return
 
     def GetMessages(self, clientSocket, username):
+
         # initialize response and number of MSG_SIZE messages to send
         responseBuilder = ''
         numMessages = 1
@@ -97,7 +96,7 @@ class Server():
             for sender, message in self.accounts[username]:
                 responseBuilder += "|" + sender + "|" + message
 
-            # calculate number of different messages to send based on MSG_SIZE
+            # calculate number of different MSG_SIZE chunks to send based on total message length
             numMessages = ((len(responseBuilder) + 2) // MSG_SIZE) + 1
 
             # append to front of message for client side to receive
