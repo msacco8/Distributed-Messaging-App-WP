@@ -26,12 +26,14 @@ By beginning with the gRPC implementation, we were able to use the request and r
 
 Each method on the client side began with the building of a request string, and the specific method was chosen by the control flow loop in the terminal interface. Each method's request was built from an operation code, and the arguments to the function, delimited by pipes, so that the server could scan the request and quickly gather information about what needed to be done. The opcodes correspond to the following functions:
 
+```
 "0" - LogIn
 "1" - CreateAccount
 "2" - SendMessage
 "3" - GetMessages
 "4" - ListAccounts
 "5" - DeleteAccount
+```
 
 The client request would then dispatch to the server where the server would alter the data structures necessary for the function, then return a pipe delimited response, where the first character indicated whether the call failed. In special cases, like in GetMessages, the first character indicated the sum of the length of all unread messages. If the character was 0 however, it always represented that an error had occurred or a restriction had been broken. Since every action that needed to be implemented could easily be done using strings, I believe the pipe delimited messages separating strings was a solid design choice for this particular assignment.
 
