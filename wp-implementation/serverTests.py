@@ -78,15 +78,3 @@ class TestServer(unittest.TestCase):
     
 if __name__ == '__main__':
     unittest.main()
-
-    # def test_client_thread(self):
-    #     clientSocket = Mock()
-    #     clientAddress = ('0.0.0.0', 1234)
-    #     clientSocket.recv.side_effect = ['0|user1\n', '3|user1\n', '']
-    #     self.server.accounts = {'user1': [('user2', 'hello')]}
-    #     self.server.ClientThread(clientSocket, clientAddress)
-    #     clientSocket.send.assert_any_call('1|user1'.encode())
-    #     clientSocket.send.assert_any_call('3|user2|hello'.encode())
-
-
-
