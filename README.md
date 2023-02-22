@@ -15,10 +15,22 @@ python3 server.py
 This will display the IP address and port that the server is listening on in the terminal. Use the IP address as a command line argument when running the client to connect to the server.
 
 ```bash
-python3 app_client.py <server IP address>
+python3 client.py <server IP address>
 ```
 
 Once connected, the client will display instructions for using the messaging system.
+
+To run the Client and Server tests enter the following commands in the 'wp-implementation' directory.
+
+Client:
+```bash
+python3 clientTests.py
+```
+
+Server:
+```bash
+python3 serverTests.py
+```
 
 ## Wire Protocol Engineering Notebook
 
@@ -123,4 +135,8 @@ Lastly, we decided that when an account is deleted, it should empty all unread m
 
 ## Notable Differences between Wire Protocol and gRPC
 
-Words.
+gRPC was great given the understandability of the clearly defined protocol for sending and receiving mesages. It is also clear that the marshalling implementations by gRPC are extremely optimized and robust, making it a much more suitable candidate for message transger across systems. That being said, it was great to implement the messaging center in gRPC first, as this provided a mental framework for the call and response model that we implemented in the wire protocol. The implementation details of the data preparation in gRPC are obviously not clearly recognized, but the assignment of specific data types to messages allowed for us to imagine how we could implement similar procedures in the wire protocol.
+
+Our WP was definitely quite rudimentary compared to gRPC but we can see the changes that could be made to the protocol to get closer to their specifications. Examples of this include using a header with each message to give the types and sizes of the different pieces of data in a message, and to know how many bytes should be received.
+
+Overall, we feel that working in each environment helped us understand the other to a much greater degree, and we look forward to potentially being able to use gRPC in future projects.
