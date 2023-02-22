@@ -7,6 +7,7 @@ import grpc
 import app_pb2
 import app_pb2_grpc
 
+
 class AppServicer(app_pb2_grpc.AppServicer):
 
     def __init__(self):
