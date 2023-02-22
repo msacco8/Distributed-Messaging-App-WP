@@ -55,7 +55,8 @@ Use the package manager [pip](https://pip.pypa.io/en/stable/) to install grpc.
 pip install grpcio
 ```
 
-To run the client and server, make sure that the two terminals are on the same network. Then, run:
+To run the client and server, make sure that the two terminals are on the same network. Then, in the 
+gRPC-implementation directory, run:
 
 ```bash
 python3 app_server.py
@@ -69,6 +70,12 @@ python3 app_client.py <server IP address>
 ```
 
 Once connected, the client will display instructions for using the messaging system.
+
+To test the code, make sure the Python unittest package is installed and run:
+
+```bash
+python3 tests.py
+```
 
 ## gRPC Engineering Notebook
 
@@ -114,4 +121,4 @@ Lastly, we decided that when an account is deleted, it should empty all unread m
 
 ## Notable Differences between Wire Protocol and gRPC
 
-Words.
+Overall, although learning how to work gRPC was a somewhat lengthy process, using it for this application proved to be much more straightforward. It felt somewhat akin to coding in C versus coding in Python. 
