@@ -248,10 +248,10 @@ class Client():
         self.sock.close()
 
 if __name__ == '__main__':
-    serverAddress = sys.argv[1]
-    if not serverAddress:
-        print("Please try again and enter the server IP address as an argument.")
-    else:
+    try:
+        serverAddress = sys.argv[1]
         client = Client()
         client.Connect(serverAddress)
         client.Run()
+    except:
+        print("Please try again and enter the server IP address as an argument.")
