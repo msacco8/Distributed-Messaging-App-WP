@@ -1,5 +1,7 @@
 # Design Documentation
 
+Project done by John Minicus and Michael Sacco
+
 ## Wire Protocol Configuration
 
 wp-implementation uses only the Python standard library
